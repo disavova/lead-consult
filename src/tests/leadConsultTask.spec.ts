@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 import { NavigationPage } from "../helpers/utils/navigationPage";
 import { BASE_URL } from "../helpers/utils/constants";
 
-
 test.describe("Lead Consult task tests", () => {
   let navigationPage: NavigationPage;
   let page: any;
@@ -21,16 +20,16 @@ test.describe("Lead Consult task tests", () => {
     await navigationPage.openServicesPage();
 
     // Verify page title
-    await page.waitForSelector("h1"); 
+    await page.waitForSelector("h1");
     const heading = await page.locator("h1.heading_title");
     await expect(heading).toHaveText("Our Services");
   });
-  
+
   test("Navigate to Customers page", async () => {
     await navigationPage.openCustomersPage();
 
     // Verify page title
-    await page.waitForSelector("h1"); 
+    await page.waitForSelector("h1");
     const heading = await page.locator("h1.heading_title");
     await expect(heading).toHaveText("Our Customers");
   });
@@ -39,7 +38,7 @@ test.describe("Lead Consult task tests", () => {
     await navigationPage.openAboutUsPage();
 
     // Verify page title
-    await page.waitForSelector("h1"); 
+    await page.waitForSelector("h1");
     const heading = await page.locator("h1.heading_title");
     await expect(heading).toHaveText("About us");
   });
@@ -53,7 +52,6 @@ test.describe("Lead Consult task tests", () => {
     const homeHeading = await page.locator("h1.heading_title");
     await expect(homeHeading).toHaveText("LEAD BY EXAMPLE");
   });
-
 
   test("Extract Quality Assurance description and footer email", async ({
     page,
@@ -89,4 +87,42 @@ test.describe("Lead Consult task tests", () => {
     console.log("Email:", email?.trim());
   });
 
+  test("Click Contact Us → Submit Empty Form → Validate Required Error", async ({
+    page,
+  }) => {
+    await page.goto(`${BASE_URL}/contact-us/`);
+
+    // Wait for the contact form to appear
+    await page.waitForSelector('input[name="your-name"]', { timeout: 5000 });
+
+    // Click SEND without filling form
+    const sendButton = page.locator('input[type="submit"][value="Send"]');
+    await sendButton.scrollIntoViewIfNeeded();
+    await sendButton.click();
+
+    // Validate both "Your Name" and "Your Email" inputs have error state
+    const nameInput = page.locator(
+      '#wpcf7-f5661-p6126-o1 input[name="your-name"]'
+    );
+    const emailInput = page.locator(
+      '#wpcf7-f5661-p6126-o1 input[name="your-email"]'
+    );
+
+    await expect(nameInput).toHaveAttribute("aria-invalid", "true");
+    await expect(emailInput).toHaveAttribute("aria-invalid", "true");
+
+    // Assert visible error message below each field
+    const nameError = page.locator(
+      'span.wpcf7-form-control-wrap[data-name="your-name"] span.wpcf7-not-valid-tip'
+    );
+    const emailError = page.locator(
+      'span.wpcf7-form-control-wrap[data-name="your-email"] span.wpcf7-not-valid-tip'
+    );
+
+    await expect(nameError).toBeVisible();
+    await expect(emailError).toBeVisible();
+
+    await expect(nameError).toContainText("The field is required.");
+    await expect(emailError).toContainText("The field is required.");
+  });
 });
